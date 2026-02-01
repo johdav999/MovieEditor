@@ -1,0 +1,86 @@
+@page "/editor"
+@using System.IO
+@using System.Linq
+@inject IJSRuntime JS
+
+<PageTitle>Editor</PageTitle>
+
+<MudPaper Class="editor-root" Square="true" Elevation="0">
+    <MudToolBar Dense="true" Class="editor-toolbar">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.FileUpload" OnClick="OpenImportDialog">Import</MudButton>
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.CallSplit">Split</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete">Delete</MudButton>
+        <MudSpacer />
+        <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Movie">Export</MudButton>
+    </MudToolBar>
+
+    <InputFile id="import-files" OnChange="HandleFilesSelected" Multiple Accept=".mp4" style="display:none" />
+
+    @if (!string.IsNullOrWhiteSpace(_importError))
+    {
+        <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Dense="true">@_importError</MudAlert>
+    }
+
+    <div class="editor-body">
+        <div class="editor-bin">
+            <BinPanel Assets="_assets" />
+        </div>
+        <div class="editor-preview">
+            <PreviewPanel />
+        </div>
+    </div>
+
+    <div class="editor-timeline">
+        <TimelinePanel />
+    </div>
+</MudPaper>
+
+@code {
+    private readonly List<MediaAsset> _assets = new();
+    private string? _importError;
+
+    private async Task OpenImportDialog()
+    {
+        _importError = null;
+        await JS.InvokeVoidAsync("movieEditor.openFilePicker", "import-files");
+    }
+
+    private void HandleFilesSelected(InputFileChangeEventArgs args)
+    {
+        _importError = null;
+
+        var selectedFiles = args.GetMultipleFiles();
+        var existingBytes = _assets.Sum(asset => asset.SizeBytes);
+        var incomingBytes = selectedFiles.Sum(file => file.Size);
+        var projectedTotal = existingBytes + incomingBytes;
+
+        if (projectedTotal > FreeTierLimits.MaxTotalImportBytes)
+        {
+            _importError = $"Import exceeds total limit of {FreeTierLimits.MaxTotalImportSizeLabel}.";
+            return;
+        }
+
+        var rejected = new List<string>();
+        foreach (var file in selectedFiles)
+        {
+            var extension = Path.GetExtension(file.Name);
+            if (!string.Equals(extension, ".mp4", StringComparison.OrdinalIgnoreCase))
+            {
+                rejected.Add(file.Name);
+                continue;
+            }
+
+            _assets.Add(new MediaAsset
+            {
+                FileName = file.Name,
+                SizeBytes = file.Size,
+                MimeType = file.ContentType
+            });
+        }
+
+        if (rejected.Count > 0)
+        {
+            _importError = $"Rejected non-MP4 files: {string.Join(", ", rejected)}.";
+        }
+    }
+}

@@ -1,7 +1,18 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Movie Editor</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Movie Editor (MVP)</h1>
 
-Welcome to your new app.
+<MudButton Variant="Variant.Filled" Color="Color.Primary" Href="editor">Open Editor</MudButton>
+
+<p>Free tier limits:</p>
+
+<ul>
+    <li>Supported input: @FreeTierLimits.SupportedInputLabel</li>
+    <li>Max total import size: @FreeTierLimits.MaxTotalImportSizeLabel</li>
+    <li>Max clip duration per asset: @FreeTierLimits.MaxClipDurationSeconds s</li>
+    <li>Max clips: @FreeTierLimits.MaxClips</li>
+    <li>Timeline: @FreeTierLimits.MaxVideoTracks video track + @FreeTierLimits.MaxAudioTracks audio track</li>
+    <li>Export: @FreeTierLimits.ExportLabel</li>
+</ul>

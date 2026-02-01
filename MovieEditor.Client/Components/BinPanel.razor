@@ -1,0 +1,33 @@
+@code {
+    [Parameter] public IReadOnlyList<MediaAsset> Assets { get; set; } = Array.Empty<MediaAsset>();
+
+    private static string FormatBytes(long bytes)
+    {
+        const double scale = 1024;
+        if (bytes < scale) return $"{bytes} B";
+        var kb = bytes / scale;
+        if (kb < scale) return $"{kb:0.#} KB";
+        var mb = kb / scale;
+        if (mb < scale) return $"{mb:0.#} MB";
+        var gb = mb / scale;
+        return $"{gb:0.##} GB";
+    }
+}
+
+<MudPaper Class="panel" Elevation="1">
+    <MudText Typo="Typo.h6">Bin</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Secondary">Imported clips will appear here.</MudText>
+    <MudList T="MediaAsset" Dense="true" Class="bin-list">
+        @if (Assets.Count == 0)
+        {
+            <MudListItem T="MediaAsset">No assets yet.</MudListItem>
+        }
+        else
+        {
+            @foreach (var asset in Assets)
+            {
+                <MudListItem T="MediaAsset">@asset.FileName (@FormatBytes(asset.SizeBytes))</MudListItem>
+            }
+        }
+    </MudList>
+</MudPaper>
